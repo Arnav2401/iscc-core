@@ -11,32 +11,21 @@ the class-attribute but prefixed with `ISCC_CORE_` and upper-cased.
     text_ngram_size: int = ic.core_opts.text_ngram_size
     ```
 """
-
 from typing import Tuple
+from pydantic import Field, ConfigDict
+from pydantic_settings import BaseSettings
 from loguru import logger as log
-
-try:
-    from pydantic.v1 import BaseSettings, Field
-except ImportError:  # pragma: no cover
-    from pydantic import BaseSettings, Field
 
 
 class CoreOptions(BaseSettings):
     """Parameters with defaults for ISCC calculations."""
 
-    class Config:
-        env_prefix = "ISCC_CORE_"
-        env_file = "iscc-core.env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(env_prefix="ISCC_CORE_", env_file="iscc-core.env", env_file_encoding="utf-8")
 
     meta_bits: int = Field(64, description="Default length of generated Meta-Code in bits")
     meta_trim_name: int = Field(128, description="Trim `name` to this mumber of bytes")
     meta_trim_description: int = Field(
         4096, description="Trim `description` to this number of bytes"
-    )
-    meta_trim_meta: int = Field(
-        128_000,
-        description="Maximum decoded payload size in bytes for the meta element. 0 = no limit.",
     )
     meta_ngram_size_text: int = Field(
         3, description="Sliding window width (characters) for metadata"
@@ -370,7 +359,6 @@ class CoreOptions(BaseSettings):
 conformanc_critical = {
     "meta_trim_name",
     "meta_trim_description",
-    "meta_trim_meta",
     "meta_ngram_size_text",
     "meta_ngram_size_bytes",
     "text_ngram_size",
@@ -387,7 +375,7 @@ def conformance_check_options(opts):
     """Check and log if options have non-default conformance critical values"""
     global has_logged_confromance
     result = True
-    for key, value in opts.dict(exclude_defaults=True).items():
+    for key, value in opts.model_dump(exclude_defaults=True).items():
         if key in conformanc_critical:
             if not has_logged_confromance:
                 log.warning(f"Non-interoperable custom option {key}={value}")
