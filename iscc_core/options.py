@@ -12,17 +12,15 @@ the class-attribute but prefixed with `ISCC_CORE_` and upper-cased.
     ```
 """
 from typing import Tuple
-from pydantic import BaseSettings, Field
+from pydantic import Field, ConfigDict
+from pydantic_settings import BaseSettings
 from loguru import logger as log
 
 
 class CoreOptions(BaseSettings):
     """Parameters with defaults for ISCC calculations."""
 
-    class Config:
-        env_prefix = "ISCC_CORE_"
-        env_file = "iscc-core.env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(env_prefix="ISCC_CORE_", env_file="iscc-core.env", env_file_encoding="utf-8")
 
     meta_bits: int = Field(64, description="Default length of generated Meta-Code in bits")
     meta_trim_name: int = Field(128, description="Trim `name` to this mumber of bytes")
@@ -377,7 +375,7 @@ def conformance_check_options(opts):
     """Check and log if options have non-default conformance critical values"""
     global has_logged_confromance
     result = True
-    for key, value in opts.dict(exclude_defaults=True).items():
+    for key, value in opts.model_dump(exclude_defaults=True).items():
         if key in conformanc_critical:
             if not has_logged_confromance:
                 log.warning(f"Non-interoperable custom option {key}={value}")
